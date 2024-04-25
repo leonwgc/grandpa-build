@@ -1,4 +1,4 @@
-import { existsSync } from 'fs'
+import { existsSync } from 'fs';
 import { basename, extname, join } from 'path';
 import { ModuleFormat, RollupOptions, Plugin } from 'rollup';
 import url from '@rollup/plugin-url';
@@ -36,7 +36,7 @@ interface IPkg {
   name?: string;
 }
 
-export default function(opts: IGetRollupConfigOpts): RollupOptions[] {
+export default function (opts: IGetRollupConfigOpts): RollupOptions[] {
   const { type, entry, cwd, rootPath, importLibToEs, bundleOpts } = opts;
   const {
     umd,
@@ -78,7 +78,7 @@ export default function(opts: IGetRollupConfigOpts): RollupOptions[] {
   // cjs 不给浏览器用，所以无需 runtimeHelpers
   const runtimeHelpers = type === 'cjs' ? false : runtimeHelpersOpts;
   const babelOpts = {
-    ...(getBabelConfig({
+    ...getBabelConfig({
       type,
       target: type === 'esm' ? 'browser' : target,
       // watch 模式下有几率走的 babel？原因未知。
@@ -87,9 +87,11 @@ export default function(opts: IGetRollupConfigOpts): RollupOptions[] {
       runtimeHelpers,
       nodeVersion,
       cwd,
-    }).opts),
+    }).opts,
     // ref: https://github.com/rollup/plugins/tree/master/packages/babel#babelhelpers
-    babelHelpers: (runtimeHelpers ? 'runtime' : 'bundled') as RollupBabelInputPluginOptions['babelHelpers'],
+    babelHelpers: (runtimeHelpers
+      ? 'runtime'
+      : 'bundled') as RollupBabelInputPluginOptions['babelHelpers'],
     // exclude: /\/node_modules\//,
     filter: (filePath: string) => {
       const rollupFilter = createFilter(null, /\/node_modules\//);
@@ -132,9 +134,7 @@ export default function(opts: IGetRollupConfigOpts): RollupOptions[] {
     const splitted = id.split('/');
     // @ 和 @tmp 是为了兼容 umi 的逻辑
     if (id.charAt(0) === '@' && splitted[0] !== '@' && splitted[0] !== '@tmp') {
-      return splitted
-        .slice(0, 2)
-        .join('/');
+      return splitted.slice(0, 2).join('/');
     } else {
       return id.split('/')[0];
     }
@@ -149,23 +149,32 @@ export default function(opts: IGetRollupConfigOpts): RollupOptions[] {
 
   const terserOpts = {
     compress: {
-      pure_getters: true,
-      unsafe: true,
-      unsafe_comps: true,
-      warnings: false,
+      // pure_getters: true,
+      // unsafe: true,
+      // unsafe_comps: true,
+      warnings: true,
     },
   };
 
   // https://github.com/umijs/father/issues/164
-  function mergePlugins(defaultRollupPlugins: Array<Plugin> = [], extraRollupPlugins: Array<Plugin> = []) {
+  function mergePlugins(
+    defaultRollupPlugins: Array<Plugin> = [],
+    extraRollupPlugins: Array<Plugin> = []
+  ) {
     const pluginsMap: Record<string, Plugin> = Object.assign(
-      defaultRollupPlugins.reduce((r, plugin) => ({ ...r, [plugin.name]: plugin }), {}),
-      extraRollupPlugins.reduce((r, plugin) => ({ ...r, [plugin.name]: plugin }), {}),
+      defaultRollupPlugins.reduce(
+        (r, plugin) => ({ ...r, [plugin.name]: plugin }),
+        {}
+      ),
+      extraRollupPlugins.reduce(
+        (r, plugin) => ({ ...r, [plugin.name]: plugin }),
+        {}
+      )
     );
     return Object.values(pluginsMap);
   }
 
-  function getPlugins(opts = {} as { minCSS: boolean; }) {
+  function getPlugins(opts = {} as { minCSS: boolean }) {
     const { minCSS } = opts;
     const defaultRollupPlugins = [
       url(),
@@ -180,22 +189,27 @@ export default function(opts: IGetRollupConfigOpts): RollupOptions[] {
         use: {
           less: {
             plugins: [new NpmImport({ prefix: '~' })],
-              javascriptEnabled: true,
-              ...lessInRollupMode
+            javascriptEnabled: true,
+            ...lessInRollupMode,
           },
           sass: {
             ...sassInRollupMode,
           },
           stylus: false,
         },
-        plugins: [autoprefixer({
-          // https://github.com/postcss/autoprefixer/issues/776
-          remove: false,
-          ...autoprefixerOpts,
-        }), ...extraPostCSSPlugins],
+        plugins: [
+          autoprefixer({
+            // https://github.com/postcss/autoprefixer/issues/776
+            remove: false,
+            ...autoprefixerOpts,
+          }),
+          ...extraPostCSSPlugins,
+        ],
       }),
       ...(injectOpts ? [inject(injectOpts as RollupInjectOptions)] : []),
-      ...(replaceOpts && Object.keys(replaceOpts || {}).length ? [replace(replaceOpts)] : []),
+      ...(replaceOpts && Object.keys(replaceOpts || {}).length
+        ? [replace(replaceOpts)]
+        : []),
       nodeResolve({
         mainFields: ['module', 'jsnext:main', 'main'],
         extensions,
@@ -203,30 +217,33 @@ export default function(opts: IGetRollupConfigOpts): RollupOptions[] {
       }),
       ...(isTypeScript
         ? [
-          typescript2({
-            cwd,
-            // @see https://github.com/umijs/father/issues/61#issuecomment-544822774
-            clean: true,
-            cacheRoot: `${tempDir}/.rollup_plugin_typescript2_cache`,
-            // 支持往上找 tsconfig.json
-            // 比如 lerna 的场景不需要每个 package 有个 tsconfig.json
-            tsconfig: [join(cwd, 'tsconfig.json'), join(rootPath, 'tsconfig.json')].find(existsSync),
-            tsconfigDefaults: {
-              compilerOptions: {
-                // Generate declaration files by default
-                declaration: true,
+            typescript2({
+              cwd,
+              // @see https://github.com/umijs/father/issues/61#issuecomment-544822774
+              clean: true,
+              cacheRoot: `${tempDir}/.rollup_plugin_typescript2_cache`,
+              // 支持往上找 tsconfig.json
+              // 比如 lerna 的场景不需要每个 package 有个 tsconfig.json
+              tsconfig: [
+                join(cwd, 'tsconfig.json'),
+                join(rootPath, 'tsconfig.json'),
+              ].find(existsSync),
+              tsconfigDefaults: {
+                compilerOptions: {
+                  // Generate declaration files by default
+                  declaration: true,
+                },
               },
-            },
-            tsconfigOverride: {
-              compilerOptions: {
-                // Support dynamic import
-                target: 'esnext',
+              tsconfigOverride: {
+                compilerOptions: {
+                  // Support dynamic import
+                  target: 'esnext',
+                },
               },
-            },
-            check: !disableTypeCheck,
-            ...(typescriptOpts || {}),
-          }),
-        ]
+              check: !disableTypeCheck,
+              ...(typescriptOpts || {}),
+            }),
+          ]
         : []),
       babel(babelOpts),
       json(),
@@ -237,10 +254,10 @@ export default function(opts: IGetRollupConfigOpts): RollupOptions[] {
   switch (type) {
     case 'esm':
       const output: Record<string, any> = {
-        dir: join(cwd, `${esm && (esm as any).dir || 'dist'}`),
+        dir: join(cwd, `${(esm && (esm as any).dir) || 'dist'}`),
         entryFileNames: `${(esm && (esm as any).file) || `${name}.esm`}.js`,
-      }
-    
+      };
+
       return [
         {
           input,
@@ -248,7 +265,10 @@ export default function(opts: IGetRollupConfigOpts): RollupOptions[] {
             format,
             ...output,
           },
-          plugins: [...getPlugins(), ...(esm && (esm as any).minify ? [terser(terserOpts)] : [])],
+          plugins: [
+            ...getPlugins(),
+            ...(esm && (esm as any).minify ? [terser(terserOpts)] : []),
+          ],
           external: testExternal.bind(null, external, externalsExclude),
         },
         ...(esm && (esm as any).mjs
@@ -257,7 +277,10 @@ export default function(opts: IGetRollupConfigOpts): RollupOptions[] {
                 input,
                 output: {
                   format,
-                  file: join(cwd, `dist/${(esm && (esm as any).file) || `${name}`}.mjs`),
+                  file: join(
+                    cwd,
+                    `dist/${(esm && (esm as any).file) || `${name}`}.mjs`
+                  ),
                 },
                 plugins: [
                   ...getPlugins(),
@@ -266,7 +289,11 @@ export default function(opts: IGetRollupConfigOpts): RollupOptions[] {
                   }),
                   terser(terserOpts),
                 ],
-                external: testExternal.bind(null, externalPeerDeps, externalsExclude),
+                external: testExternal.bind(
+                  null,
+                  externalPeerDeps,
+                  externalsExclude
+                ),
               },
             ]
           : []),
@@ -280,7 +307,10 @@ export default function(opts: IGetRollupConfigOpts): RollupOptions[] {
             format,
             file: join(cwd, `dist/${(cjs && (cjs as any).file) || name}.js`),
           },
-          plugins: [...getPlugins(), ...(cjs && (cjs as any).minify ? [terser(terserOpts)] : [])],
+          plugins: [
+            ...getPlugins(),
+            ...(cjs && (cjs as any).minify ? [terser(terserOpts)] : []),
+          ],
           external: testExternal.bind(null, external, externalsExclude),
         },
       ];
@@ -302,7 +332,8 @@ export default function(opts: IGetRollupConfigOpts): RollupOptions[] {
             sourcemap: umd && umd.sourcemap,
             file: join(cwd, `dist/${(umd && umd.file) || `${name}.umd`}.js`),
             globals: umd && umd.globals,
-            name: (umd && umd.name) || (pkg.name && camelCase(basename(pkg.name))),
+            name:
+              (umd && umd.name) || (pkg.name && camelCase(basename(pkg.name))),
           },
           plugins: [
             ...extraUmdPlugins,
@@ -321,9 +352,14 @@ export default function(opts: IGetRollupConfigOpts): RollupOptions[] {
                 output: {
                   format,
                   sourcemap: umd && umd.sourcemap,
-                  file: join(cwd, `dist/${(umd && umd.file) || `${name}.umd`}.min.js`),
+                  file: join(
+                    cwd,
+                    `dist/${(umd && umd.file) || `${name}.umd`}.min.js`
+                  ),
                   globals: umd && umd.globals,
-                  name: (umd && umd.name) || (pkg.name && camelCase(basename(pkg.name))),
+                  name:
+                    (umd && umd.name) ||
+                    (pkg.name && camelCase(basename(pkg.name))),
                 },
                 plugins: [
                   ...extraUmdPlugins,
@@ -333,7 +369,11 @@ export default function(opts: IGetRollupConfigOpts): RollupOptions[] {
                   }),
                   terser(terserOpts),
                 ],
-                external: testExternal.bind(null, externalPeerDeps, externalsExclude),
+                external: testExternal.bind(
+                  null,
+                  externalPeerDeps,
+                  externalsExclude
+                ),
               },
             ]),
       ];
