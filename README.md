@@ -1,5 +1,3 @@
 # grandpa-build
 
-# fork from father-build src codes
-
-
+Fork from father-build src codes. Father is too heavy and i don't like it.
