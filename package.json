@@ -4,7 +4,10 @@
   "description": "Library build tool based on rollup.",
   "main": "lib/index.js",
   "bin": {
-    "grandpa-build": "./bin/father-build.js"
+    "grandpa-build": "./bin/grandpa-build.js"
+  },
+  "scripts": {
+    "build": "./bin/father-build.js"
   },
   "typings": "./index.d.ts",
   "dependencies": {
@@ -77,8 +80,7 @@
   ],
   "license": "MIT",
   "devDependencies": {
-    "@types/gulp-plumber": "^0.0.32",
-    "father-build": "^1.20.4"
+    "@types/gulp-plumber": "^0.0.32"
   },
   "gitHead": "91bf829b0284dbf008e4987fed64cc8089d29974"
 }
